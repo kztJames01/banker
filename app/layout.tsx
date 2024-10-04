@@ -1,16 +1,17 @@
+export const dynamic = 'force-dynamic'
 import type { Metadata } from "next";
 import { Inter, Roboto } from 'next/font/google';
 import "./globals.css";
 
 const inter = Inter({
-    subsets: ['latin'],
-    variable: '--font-inter',
+  subsets: ['latin'],
+  variable: '--font-inter',
 })
 const robo = Roboto({
-    subsets: ['latin'],
-    weight: ['400', '700'],
-    style: ['normal', 'italic'],
-    variable: '--font-robo',
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-robo',
 })
 
 export const metadata: Metadata = {
