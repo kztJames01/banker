@@ -7,7 +7,6 @@ import { sidebarLinks } from '../constants'
 import { cn } from '../lib/utils'
 import { usePathname } from 'next/navigation'
 
-
 const SideBar = ({ user }: SiderbarProps) => {
 
     const pathname = usePathname();
@@ -30,7 +29,7 @@ const SideBar = ({ user }: SiderbarProps) => {
                         </Link>
                     )
                 })}
-        </nav>
+            </nav>
     </section >
   )
 }
