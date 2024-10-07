@@ -341,11 +341,11 @@
 
     /* Footer */
     .footer {
-        @apply flex cursor-pointer items-center justify-between gap-2 py-6;
+        @apply flex cursor-pointer items-center justify-between gap-4 py-6;
     }
 
     .footer_name {
-        @apply flex size-10 items-center justify-center rounded-full bg-gray-200 max-xl:hidden;
+        @apply flex size-10 px-3.5 items-center justify-center rounded-full bg-gray-200 max-xl:hidden;
     }
 
     .footer_email {
@@ -353,7 +353,7 @@
     }
 
     .footer_name-mobile {
-        @apply flex size-10 items-center justify-center rounded-full bg-gray-200;
+        @apply flex size-10 px-3.5 items-center justify-center rounded-full bg-gray-200;
     }
 
     .footer_email-mobile {
