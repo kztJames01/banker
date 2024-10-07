@@ -10,19 +10,17 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
     Form,
-    FormControl,
 
 } from "@/components/ui/form"
 import CustomInput from './CustomInput'
-import { autoFormSchema } from '@/lib/utils'
+import { authFormSchema } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
-
-
-
-
+import { signIn, signUp } from '@/lib/actions/user.actions'
+import { useRouter } from 'next/navigation'
 const AuthForm = ({ type }: { type: string }) => {
     const [user, setUser] = useState(null)
-    const formSchema = autoFormSchema(type)
+    const router = useRouter()
+    const formSchema = authFormSchema(type)
     const [loading, setLoading] = useState(false)
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -32,9 +30,40 @@ const AuthForm = ({ type }: { type: string }) => {
         }
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    const onSubmit = async (data: z.infer<typeof formSchema>) => {
         setLoading(true);
-        console.log(values)
+        try {
+            if (type === 'sign-up') {
+                const userData = {
+                    firstName: data.firstName!,
+                    lastName: data.lastName!,
+                    address: data.address!,
+                    city: data.city!,
+                    state: data.state!,
+                    postalCode: data.postalCode!,
+                    dateOfBirth: data.dateOfBirth!,
+                    ssn: data.ssn!,
+                    phone: data.phone!,
+                    email: data.email,
+                    password: data.password,
+                }
+                const newUser = await signUp(userData);
+                setUser(newUser);
+            }
+            if (type === 'sign-in') {
+                const response = await signIn({
+                    email: data.email,
+                    password: data.password
+                });
+                if (response) 
+                    router.push('/');
+            }
+         }
+        catch (error) {
+
+        } finally {
+            setLoading(false);
+        }
     }
     return (
         <section className='auth-form'>
@@ -68,44 +97,44 @@ const AuthForm = ({ type }: { type: string }) => {
                                             <CustomInput control={form.control} name="firstName" label="First Name" placeholder="Enter your first name" />
                                             <CustomInput control={form.control} name="lastName" label="Last Name" placeholder="Enter your last name" />
                                         </div>
+                                        <CustomInput control={form.control} name="phone" label="Phone" placeholder="Example: +17374209436" />
+                                        <CustomInput control={form.control} name="address" label="Address" placeholder="Enter your address" />
+                                        <CustomInput control={form.control} name="city" label="City" placeholder="Example: New York" />
+
                                         <div className='flex gap-4'>
-                                            <CustomInput control={form.control} name="address" label="Address" placeholder="Enter your address" />
-                                            <CustomInput control={form.control} name="city" label="City" placeholder="Enter your city" />
+                                            <CustomInput control={form.control} name="state" label="State" placeholder="Example: TX" />
+                                            <CustomInput control={form.control} name="ssn" label="SSN" placeholder="Example: 1234" />
                                         </div>
                                         <div className='flex gap-4'>
-                                            <CustomInput control={form.control} name="state" label="State" placeholder="Enter your state" />
-                                            <CustomInput control={form.control} name="country" label="Country" placeholder="Enter your country" />
-                                        </div>
-                                        <div className='flex gap-4'>
-                                            <CustomInput control={form.control} name="postalCode" label="Zip Code" placeholder="Enter your zip code" />
-                                            <CustomInput control={form.control} name="dateofBirth" label="Date of Birth" placeholder="Enter your date of birth" />
+                                            <CustomInput control={form.control} name="postalCode" label="Zip Code" placeholder="Example: 11010" />
+                                            <CustomInput control={form.control} name="dateOfBirth" label="Date of Birth" placeholder="YYYY-MM-DD" />
                                         </div>
                                     </>
                                 )}
                                 <CustomInput control={form.control} name="email" label="Email" placeholder="Enter your email" />
                                 <CustomInput control={form.control} name="password" label="Password" placeholder="Enter your password" />
                                 {type === 'sign-up' && (
-                                    <CustomInput control={form.control} name="password1" label="Password" placeholder="Confirm your password" />
+                                    <CustomInput control={form.control} name="confirmPassword" label="Password" placeholder="Confirm your password" />
                                 )}
 
-                                <Button type="submit" disabled={loading} className="w-full py-4">
-                                    {loading ? 
+                                <Button type="submit" disabled={loading} className="form-btn w-full">
+                                    {loading ?
                                         <>
-                                            <Loader2 size={20} className='animate-spin mr-3'/> &nbsp;
+                                            <Loader2 size={20} className='animate-spin mr-3' /> &nbsp;
                                             Loading...
                                         </>
-                                     : type === 'sign-in' ? 'Sign In' : 'Sign Up'}
+                                        : type === 'sign-in' ? 'Sign In' : 'Sign Up'}
                                 </Button>
 
                             </form>
                         </Form>
                         <footer className="flex justify-center gap-1">
-                                <p className='text-14 font-normal text-gray-600'>
-                                    {type === 'sign-in' ? 'Don’t have an account?' : 'Already have an account?'}
-                                </p>
-                                <Link href={type === 'sign-in' ? '/sign-up' : '/sign-in'} className='form-link'>
-                                        {type === 'sign-in' ? 'Sign Up' : 'Sign In'}
-                                </Link>
+                            <p className='text-14 font-normal text-gray-600'>
+                                {type === 'sign-in' ? 'Don’t have an account?' : 'Already have an account?'}
+                            </p>
+                            <Link href={type === 'sign-in' ? '/sign-up' : '/sign-in'} className='form-link'>
+                                {type === 'sign-in' ? 'Sign Up' : 'Sign In'}
+                            </Link>
                         </footer>
                     </>
 
