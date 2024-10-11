@@ -1,6 +1,6 @@
 import React from 'react';
 import AuthForm from '@/components/AuthForm';
-import { getLoggedInUser } from '@/lib/actions/user.actions';
+
 const SignUp =  () => {
     //  debugging const user = await getLoggedInUser();
     return (
