@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, {  useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,18 +15,20 @@ import {
 import CustomInput from './CustomInput'
 import { authFormSchema } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
-import { signIn, signUp } from '@/lib/actions/user.actions'
-import { useRouter } from 'next/navigation'
+import { getLoggedInUser, signIn, signUp } from '@/lib/actions/user.actions'
+import { redirect, useRouter } from 'next/navigation'
+import PlaidLink from './PlaidLink'
 const AuthForm = ({ type }: { type: string }) => {
-    const [user, setUser] = useState(null)
-    const router = useRouter()
-    const formSchema = authFormSchema(type)
-    const [loading, setLoading] = useState(false)
+    const [user, setUser] = useState(null);
+    const router = useRouter();
+    const formSchema = authFormSchema(type);
+    const [loading, setLoading] = useState(false);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: "",
-            password: "",
+            password: '',
         }
     })
 
@@ -37,30 +39,39 @@ const AuthForm = ({ type }: { type: string }) => {
                 const userData = {
                     firstName: data.firstName!,
                     lastName: data.lastName!,
-                    address: data.address!,
+                    address1: data.address1!,
                     city: data.city!,
                     state: data.state!,
                     postalCode: data.postalCode!,
                     dateOfBirth: data.dateOfBirth!,
                     ssn: data.ssn!,
-                    phone: data.phone!,
+                    //phone: data.phone!,
                     email: data.email,
                     password: data.password,
                 }
                 const newUser = await signUp(userData);
-                setUser(newUser);
+                if(newUser) {
+                    router.push('/sign-in');
+                }else{
+                    console.log('error');
+                    redirect('/sign-up');
+                    
+                }
+               
             }
             if (type === 'sign-in') {
                 const response = await signIn({
                     email: data.email,
                     password: data.password
-                });
-                if (response) 
-                    router.push('/');
+                })
+                if (response) {
+                    const loggedInUser = await getLoggedInUser();
+                    setUser(loggedInUser);
+                }
             }
          }
         catch (error) {
-
+            console.log(error);
         } finally {
             setLoading(false);
         }
@@ -86,7 +97,9 @@ const AuthForm = ({ type }: { type: string }) => {
             </header>
             {user ?
                 (
-                    <div className='flex flex-col gap-4'></div>
+                    <div className='flex flex-col gap-4'>
+                        <PlaidLink user={user} variant='primary' />
+                    </div>
                 ) : (
                     <>
                         <Form {...form}>
@@ -97,8 +110,8 @@ const AuthForm = ({ type }: { type: string }) => {
                                             <CustomInput control={form.control} name="firstName" label="First Name" placeholder="Enter your first name" />
                                             <CustomInput control={form.control} name="lastName" label="Last Name" placeholder="Enter your last name" />
                                         </div>
-                                        <CustomInput control={form.control} name="phone" label="Phone" placeholder="Example: +17374209436" />
-                                        <CustomInput control={form.control} name="address" label="Address" placeholder="Enter your address" />
+                                        
+                                        <CustomInput control={form.control} name="address1" label="Address" placeholder="Enter your address" />
                                         <CustomInput control={form.control} name="city" label="City" placeholder="Example: New York" />
 
                                         <div className='flex gap-4'>
@@ -113,9 +126,7 @@ const AuthForm = ({ type }: { type: string }) => {
                                 )}
                                 <CustomInput control={form.control} name="email" label="Email" placeholder="Enter your email" />
                                 <CustomInput control={form.control} name="password" label="Password" placeholder="Enter your password" />
-                                {type === 'sign-up' && (
-                                    <CustomInput control={form.control} name="confirmPassword" label="Password" placeholder="Confirm your password" />
-                                )}
+                                
 
                                 <Button type="submit" disabled={loading} className="form-btn w-full">
                                     {loading ?
