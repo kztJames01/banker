@@ -15,10 +15,11 @@ import {
 export const getAccounts = async ({ userId }: getAccountsProps) => {
 
     try {
-        const banks = await getBanks({ userId: userId });
-        const accounts = await Promise.all(banks.map(async (bank: any) => {
+        const banks = await getBanks({ userId });
+        const accounts = await Promise.all(banks?.map(async (bank: Bank) => {
+            if (!bank.accessToken) throw new Error('No Access Token with ID: ${bank.$id}');
 
-            const accountResponse = await plaidClient.accountsGet({ access_token: bank.processorToken });
+            const accountResponse = await plaidClient.accountsGet({ access_token: bank.accessToken });
             const accountData = accountResponse.data.accounts[0];
             const institution = await getInstitution({ institutionId: accountResponse.data.item.institution_id! });
             const account = {
@@ -29,8 +30,8 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
                 name: accountData.name,
                 officialName: institution.name,
                 mask: accountData.mask!,
-                type: accountData.type,
-                subtype: accountData.subtype,
+                type: accountData.type as string,
+                subtype: accountData.subtype as string,
                 appwriteItemId: bank.$id,
                 shareableId: bank.shareableId,
             };
@@ -48,30 +49,44 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
 export const getAccount = async ({ appwriteItemId }: getAccountProps) => {
 
     try {
-        const banks = await getBank({ documentId: appwriteItemId });
-        const accounts = await Promise.all(banks.map(async (bank: any) => {
-
-            const accountResponse = await plaidClient.accountsGet({ access_token: bank.processorToken });
-            const accountData = accountResponse.data.accounts[0];
-            const transferTransactionData = await getTransactionsByBankId({ bankId: bank.$id });
-            const institution = await getInstitution({ institutionId: accountResponse.data.item.institution_id! });
-            const transactions = getTransactions({
-                accessToken: bank?.accessToken,
+        const bank = await getBank({ documentId: appwriteItemId });
+        const accountResponse = await plaidClient.accountsGet({ access_token: bank.accessToken});
+        const accountData = accountResponse.data.accounts[0];
+        const transferTransactionData = await getTransactionsByBankId({ bankId: bank.$id });
+        const institution = await getInstitution({ institutionId: accountResponse.data.item.institution_id! });
+        const transactions = await getTransactions({
+            accessToken: bank?.accessToken,
+        })
+        const transferTransactions = transferTransactionData.documents.map(
+            (transferData: Transaction) => ({
+                id: transferData.$id,
+                name: transferData.name!,
+                amount: transferData.amount!,
+                type: transferData.senderBankId === bank.$id ? 'debit' : 'credit',
+                date: transferData.$createdAt,
+                paymentChannel: transferData.channel,
+                category: transferData.category,
             })
-            const transferTransactions = transferTransactionData.documents.map(
-                (transferData: Transaction)=>({
-                    id: transferData.$id,
-                    amount: transferData.amount,
-                    type: transferData.senderBankId === bank.$id ? 'debit' : 'credit',
-                    date: transferData.$createdAt,
-                    paymentChannel: transferData.channel,
-                    category: transferData.category,
-                })
-            )
-        }));
-        const totalBanks = accounts.length;
-        const totalCurrentBalance = accounts.reduce((total, account) => { return total + account.currentBalance; }, 0);
-        return parseStringify({ data: accounts, totalBanks, totalCurrentBalance });
+        )
+        const account = {
+            id: accountData.account_id,
+            availableBalance: accountData.balances.available,
+            currentBalance: accountData.balances.current,
+            instiutionId: institution.institution_id,
+            name: accountData.name,
+            officialName: accountData.official_name,
+            mask: accountData.mask!,
+            type: accountData.type as string,
+            subtype: accountData.subtype! as string,
+            appwriteItemId: bank.$id,
+
+        };
+        const allTransactions = [...transactions, ...transferTransactions].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        return parseStringify({ data: account, transactions: allTransactions });
+        
+        
     }
     catch (error) {
         console.error("An Error Ocurred", error);
@@ -112,7 +127,7 @@ export const getTransactions = async ({ accessToken }: getTransactionsProps) => 
                 accountId: transaction.account_id,
                 amount: transaction.amount,
                 pending: transaction.pending,
-                category: transaction.category ? transaction.category[0] : "",
+                category: transaction.personal_finance_category,
                 date: transaction.date,
                 image: transaction.logo_url,
             }));

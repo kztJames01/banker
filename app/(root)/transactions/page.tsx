@@ -1,5 +1,5 @@
 import HeaderBox from '@/components/HeaderBox'
-import { Pagination } from '@/components/Pagination';
+import {Pagnination} from '@/components/Pagination';
 import TransactionTable from '@/components/TransactionTable';
 import { getAccount, getAccounts } from '@/lib/actions/bank.actions';
 import { getLoggedInUser } from '@/lib/actions/user.actions';
@@ -55,7 +55,7 @@ const TransactionHistory
             <TransactionTable transactions={currentTransactions} />
               {totalPages > 1 && (
             
-                <Pagination totalPages={totalPages} page={currentPage} />
+                <Pagnination totalPages={totalPages} page={currentPage} />
             
               )}
           </section>
