@@ -17,6 +17,7 @@ export const getAccounts = async ({ userId }: getAccountsProps) => {
     try {
         const banks = await getBanks({ userId });
         const accounts = await Promise.all(banks?.map(async (bank: Bank) => {
+            if (!bank.accessToken) throw new Error('No Access Token with ID: ${bank.$id}');
 
             const accountResponse = await plaidClient.accountsGet({ access_token: bank.accessToken });
             const accountData = accountResponse.data.accounts[0];
